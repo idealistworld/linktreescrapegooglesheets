@@ -1,0 +1,53 @@
+function getEmailAndName() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName("Working")
+  var linkTreeLinks = sheet.getRange("A2:A").getValues();
+  const gmailAddressFormat = /[\w\.-]+@gmail\.com/g;
+  const nameFormat = /<h1[^>]*>([^<]+)<\/h1>/;
+
+
+  for (var x = 0; x < linkTreeLinks.length; x++) {
+    var linkTreeURL = linkTreeLinks[x]
+
+    if (linkTreeLinks[x].toString().indexOf("out") == -1 && linkTreeLinks[x].toString().indexOf("google") == -1) {
+
+      try {
+        var response = UrlFetchApp.fetch(linkTreeURL);
+      } catch (error) {
+        // Handle the error gracefully
+        var response = UrlFetchApp.fetch("google.com");
+      }
+
+      var websiteHTMLCode = response.getContentText()
+
+      try {
+        var gmailAddress = websiteHTMLCode.match(gmailAddressFormat)[0];
+      } catch (error) {
+        // Handle the error gracefully
+        var gmailAddress = "";
+      }
+
+
+      try {
+        var name = websiteHTMLCode.match(nameFormat)[1];
+      } catch (error) {
+        // Handle the error gracefully
+        var name = "";
+      }
+
+
+
+      if (name.indexOf("@") != -1) {
+        name = name.replace(/@/g, "");
+      }
+
+      var nameColumn = "B" + (x + 2).toString()
+      var linkColumn = "C" + (x + 2).toString()
+      var gmailColumn = "D" + (x + 2).toString()
+
+      sheet.getRange(nameColumn).setValue(name)
+      sheet.getRange(linkColumn).setValue(linkTreeLinks[x].toString())
+      sheet.getRange(gmailColumn).setValue(gmailAddress)
+    }
+  }
+}
